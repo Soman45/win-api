@@ -6,16 +6,24 @@ const jwt = require('jsonwebtoken');
 //untuk register
 exports.register = async (req, res) => {
   const { name, email, password, jenis_kelamin } = req.body;
+  const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
+  // Check apakah email valid 
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ msg: 'Invalid email format' });
+  }
   try {
     let user = await User.findOne({ where: { email } });
+    // Check apakah email user ada
     if (user) {
       return res.status(400).json({ msg: 'User already exists' });
     }
-
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     user = await User.create({
       name,
       email,
-      password,
+      password: hashedPassword,
       jenis_kelamin
     });
 
